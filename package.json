@@ -1,0 +1,41 @@
+{
+  "name": "daybook-desktop",
+  "productName": "Daybook",
+  "version": "1.0.0",
+  "description": "A private, offline-first daily planner for Windows desktop.",
+  "main": "main.js",
+  "author": "Shubham Gadhe",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis",
+    "pack:win": "electron-builder --win dir"
+  },
+  "devDependencies": {
+    "electron": "^36.3.2",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.shubhamgadhe.daybook",
+    "productName": "Daybook",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "index.html",
+      "main.js",
+      "package.json"
+    ],
+    "win": {
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Daybook"
+    }
+  }
+}
