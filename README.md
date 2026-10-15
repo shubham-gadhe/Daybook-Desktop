@@ -170,17 +170,9 @@ This project was developed to practice building a desktop application from web t
 
 ---
 
-## 📜 License
-
-Add a license file if you intend to distribute the project under an open-source license.
-
----
-
 ## 👨‍💻 Author
 
 **Shubham Gadhe**
-
-GitHub: [@shubham-gadhe](https://github.com/shubham-gadhe)
 
 ---
 
