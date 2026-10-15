@@ -1,4 +1,15 @@
 <!doctype html>
+<!--
+    File Name: Daybook.html
+    Description: A simple daily planner to add, update, complete and delete tasks.
+    Author: Shubham Somanath Gadhe
+
+    Features:
+    - Daily and weekly task planning
+    - Task priority, category and reminders
+    - Task history and completion summary
+    - Saves tasks in browser local storage
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -7,7 +18,7 @@
 <style>:root{color-scheme:light}body{margin:0}img{max-width:100%}</style>
 <title>Daybook</title>
 <style>
-/* Layout: a day planner. Big date header, a week strip to move between days, a task column with a quick composer, and a side rail with progress, next-up and alert status. History is a second view with a completion chart and a day-by-day ledger. */
+/* Main page layout and common colors */
 :root{
   --bg:#EDF1F0; --surface:#FFFFFF; --surface-2:#F4F7F6; --ink:#10242A; --ink-2:#4A6168; --line:#D5DEDC;
   --accent:#2747F0; --accent-ink:#FFFFFF; --accent-soft:#E2E7FF;
@@ -317,8 +328,14 @@ var todayStr=function(){return ymd(new Date())};
 var nowHM=function(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
 var LOC='en-IN';
 var fmtLong=function(s,o){return parse(s).toLocaleDateString(LOC,o)};
+// Method Name: fmtTime
+// Description: Converts 24-hour time into 12-hour time.
 function fmtTime(hm){if(!hm)return'';var p=hm.split(':').map(Number);return (p[0]%12||12)+':'+pad(p[1])+' '+(p[0]<12?'AM':'PM')}
+// Method Name: relDay
+// Description: Returns a readable name for a date.
 function relDay(s){var t=todayStr();if(s===t)return'Today';if(s===addDays(t,1))return'Tomorrow';if(s===addDays(t,-1))return'Yesterday';return fmtLong(s,{weekday:'short',day:'numeric',month:'short'})}
+// Method Name: relMins
+// Description: Converts reminder time into minutes or hours.
 function relMins(ms){var m=Math.max(0,Math.round(ms/60000));if(m<60)return m+' min';var h=Math.floor(m/60);return h+' h'+(m%60?' '+(m%60)+' min':'')}
 
 var ICONS={
@@ -332,7 +349,11 @@ var ICONS={
   x:'<path d="M18 6L6 18M6 6l12 12"/>',
   book:'<path d="M4 4h12a4 4 0 014 4v12H8a4 4 0 01-4-4z"/><path d="M8 4v16"/>'
 };
+// Method Name: ico
+// Description: Creates an icon element.
 function ico(n){var s=document.createElement('span');s.className='ico';s.setAttribute('aria-hidden','true');s.innerHTML='<svg viewBox="0 0 24 24">'+ICONS[n]+'</svg>';return s}
+// Method Name: h
+// Description: Creates an HTML element and adds its attributes and children.
 function h(tag,attrs){
   var e=document.createElement(tag);
   if(attrs)for(var k in attrs){var v=attrs[k];if(v==null||v===false)continue;
@@ -344,9 +365,13 @@ function h(tag,attrs){
   return e;
 }
 
-/* ---------- state ---------- */
+// Store the current planner data and settings.
 var S={tasks:new Map(),mode:'boot',col:null,sel:todayStr(),tab:'plan',filter:'all',range:14,hfilter:'all',
   editing:null,notified:new Set(),snooze:new Map(),chains:{},seeded:false};
+
+// Method Name: seed
+
+// Description: Creates sample tasks for the planner.
 
 function seed(){
   var T=todayStr();
@@ -368,37 +393,65 @@ function seed(){
   });
 }
 
-/* ---------- persistence ---------- */
+// Methods used to save and load planner data.
+// Method Name: clean
+// Description: Copies task data without undefined values.
 function clean(t){var o={};for(var k in t)if(t[k]!==undefined)o[k]=t[k];return o}
+// Method Name: queue
+// Description: Runs save operations one after another.
 function queue(id,fn){
   S.chains[id]=(S.chains[id]||Promise.resolve()).then(fn).catch(function(){toast({title:'Could not save',body:'Check your connection. Your latest change may not be stored.'})});
 }
+// Method Name: saveLocal
+// Description: Saves all tasks in browser local storage.
 function saveLocal(){try{localStorage.setItem('daybook.v1',JSON.stringify(Array.from(S.tasks.entries())))}catch(e){}}
+// Method Name: loadLocal
+// Description: Loads saved tasks from browser local storage.
 function loadLocal(){try{var r=localStorage.getItem('daybook.v1');return r?JSON.parse(r):null}catch(e){return null}}
+// Method Name: persist
+// Description: Saves one task when cloud storage is enabled.
 function persist(id){
   var t=S.tasks.get(id);if(!t)return;
   if(S.mode==='cloud')queue(id,function(){return S.col.doc(id).set(clean(t))});
   else if(S.mode==='local')saveLocal();
 }
+// Method Name: persistDelete
+// Description: Removes a task from saved data.
 function persistDelete(id){
   if(S.mode==='cloud')queue(id,function(){return S.col.doc(id).delete()});
   else if(S.mode==='local')saveLocal();
 }
+// Method Name: newId
+// Description: Creates a unique ID for a task.
 function newId(){return 't_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+// Method Name: loadNotified
+// Description: Loads reminders that have already been shown.
 function loadNotified(){try{var a=JSON.parse(localStorage.getItem('daybook.notified')||'[]');a.forEach(function(k){S.notified.add(k)})}catch(e){}}
+// Method Name: saveNotified
+// Description: Saves the reminders that were already shown.
 function saveNotified(){try{var t=todayStr();var a=Array.from(S.notified).filter(function(k){return k.split('|')[1]>=addDays(t,-1)});localStorage.setItem('daybook.notified',JSON.stringify(a))}catch(e){}}
 
 /* ---------- queries ---------- */
+// Method Name: byTime
+// Description: Sorts tasks by time and creation date.
 function byTime(a,b){return (a[1].time||'99:99').localeCompare(b[1].time||'99:99')||(a[1].createdAt||'').localeCompare(b[1].createdAt||'')}
+// Method Name: tasksOn
+// Description: Returns all tasks for the selected date.
 function tasksOn(d){return Array.from(S.tasks).filter(function(e){return e[1].date===d}).sort(byTime)}
+// Method Name: dayStat
+// Description: Returns the total and completed task count for a date.
 function dayStat(d){var ts=tasksOn(d);return{d:d,total:ts.length,done:ts.filter(function(e){return e[1].done}).length}}
 
 /* ---------- actions ---------- */
+// Method Name: toggle
+// Description: Marks a task as completed or incomplete.
 function toggle(id){
   var t=S.tasks.get(id);if(!t)return;
   S.tasks.set(id,Object.assign({},t,{done:!t.done,doneAt:!t.done?new Date().toISOString():null}));
   persist(id);renderAll();
 }
+// Method Name: removeTask
+// Description: Deletes a task from the planner.
 function removeTask(id){
   var t=S.tasks.get(id);if(!t)return;
   S.tasks.delete(id);persistDelete(id);
@@ -406,12 +459,16 @@ function removeTask(id){
   renderAll();
   toast({title:'Task deleted',body:t.title,ttl:6000,actions:[{label:'Undo',fn:function(){S.tasks.set(id,t);persist(id);renderAll()}}]});
 }
+// Method Name: moveToToday
+// Description: Moves selected tasks to today.
 function moveToToday(ids){
   var t0=todayStr();
   ids.forEach(function(id){var t=S.tasks.get(id);if(t){S.tasks.set(id,Object.assign({},t,{date:t0}));persist(id)}});
   renderAll();
   toast({title:ids.length>1?ids.length+' tasks moved to today':'Moved to today',ttl:3000});
 }
+// Method Name: clearSamples
+// Description: Removes sample tasks from the planner.
 function clearSamples(){
   Array.from(S.tasks).forEach(function(e){if(e[1].sample){S.tasks.delete(e[0]);persistDelete(e[0])}});
   renderAll();toast({title:'Sample tasks cleared',ttl:3000});
@@ -419,10 +476,14 @@ function clearSamples(){
 
 /* ---------- composer ---------- */
 var F={title:$('#f-title'),date:$('#f-date'),time:$('#f-time'),remind:$('#f-remind'),prio:$('#f-prio'),cat:$('#f-cat'),note:$('#f-note')};
+// Method Name: resetComposer
+// Description: Clears the task form and restores its default values.
 function resetComposer(){
   S.editing=null;F.title.value='';F.time.value='';F.note.value='';F.remind.value='10';F.prio.value='med';F.cat.value='';
   F.date.value=S.sel;$('#f-submit').textContent='Add task';$('#editbar').hidden=true;
 }
+// Method Name: startEdit
+// Description: Loads an existing task into the edit form.
 function startEdit(id){
   var t=S.tasks.get(id);if(!t)return;
   S.editing=id;F.title.value=t.title;F.date.value=t.date;F.time.value=t.time||'';F.note.value=t.note||'';
@@ -448,10 +509,18 @@ $('#f-cancel').addEventListener('click',resetComposer);
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.editing)resetComposer()});
 
 /* ---------- rendering ---------- */
+// Method Name: seg
+// Description: Builds a group of selectable buttons.
 function seg(box,opts,cur,fn){
   box.replaceChildren.apply(box,opts.map(function(o){return h('button',{type:'button','aria-pressed':String(o[0]===cur),onclick:function(){fn(o[0])}},o[1])}));
 }
+// Method Name: chip
+// Description: Creates a small label for task information.
 function chip(cls,text,icon){return h('span',{class:'chip '+cls},icon?ico(icon):null,text)}
+
+// Method Name: taskRow
+
+// Description: Builds the task row displayed in the list.
 
 function taskRow(id,t,o){
   o=o||{};
@@ -476,6 +545,10 @@ function taskRow(id,t,o){
     h('div',{class:'tbody'},h('div',{class:'ttitle',text:t.title}),t.note?h('div',{class:'tnote',text:t.note}):null,meta),acts);
 }
 
+// Method Name: renderHero
+
+// Description: Displays the selected date heading.
+
 function renderHero(){
   var t=todayStr(),isToday=S.sel===t,st=dayStat(S.sel),left=st.total-st.done;
   $('#hero-day').textContent=fmtLong(S.sel,{weekday:'long'})+' · '+parse(S.sel).getFullYear();
@@ -489,7 +562,11 @@ function renderHero(){
   $('#hero-sub').textContent=line;
   $('#jump-date').value=S.sel;
 }
+// Method Name: mondayOf
+// Description: Finds the Monday for the week of a given date.
 function mondayOf(s){var d=parse(s),w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return ymd(d)}
+// Method Name: renderWeek
+// Description: Displays the days of the selected week.
 function renderWeek(){
   var mon=mondayOf(S.sel),t=todayStr(),box=$('#week'),days=[];
   for(var i=0;i<7;i++)days.push(addDays(mon,i));
@@ -505,7 +582,13 @@ function renderWeek(){
       h('span',{class:'meter'},h('i',{style:'width:'+pct+'%'})));
   }));
 }
+// Method Name: setSel
+// Description: Changes the selected date and refreshes the page.
 function setSel(d){S.sel=d;if(!S.editing)F.date.value=d;renderAll()}
+
+// Method Name: renderCarry
+
+// Description: Displays tasks carried over to another day.
 
 function renderCarry(){
   var box=$('#carry');box.replaceChildren();
@@ -519,6 +602,8 @@ function renderCarry(){
       h('button',{class:'btn small',type:'button',onclick:function(){moveToToday(ids)}},'Move all to today')),
     ul,over.length>6?h('div',{class:'muted',style:'padding-left:4px',text:'And '+(over.length-6)+' more. See History for the full list.'}):null));
 }
+// Method Name: renderList
+// Description: Displays tasks for the selected date.
 function renderList(){
   $('#list-title').textContent=relDay(S.sel);
   seg($('#filter'),[['all','All'],['open','Open'],['done','Done']],S.filter,function(v){S.filter=v;renderList();renderFilterSeg()});
@@ -534,7 +619,13 @@ function renderList(){
   }
   box.append(h('ul',{class:'tasklist'},rows.map(function(e){return taskRow(e[0],e[1])})));
 }
+// Method Name: renderFilterSeg
+// Description: Displays the task filter buttons.
 function renderFilterSeg(){seg($('#filter'),[['all','All'],['open','Open'],['done','Done']],S.filter,function(v){S.filter=v;renderList()})}
+
+// Method Name: renderRing
+
+// Description: Displays the task completion summary.
 
 function renderRing(){
   var st=dayStat(S.sel),pct=st.total?st.done/st.total:0,R=52,C=2*Math.PI*R;
@@ -546,6 +637,8 @@ function renderRing(){
   card.append(h('h3',{text:S.sel===todayStr()?'Today’s progress':relDay(S.sel)+' progress'}),
     h('div',{class:'ringwrap'},ring,h('div',{class:'ringtext'},h('b',{text:st.done+' of '+st.total+' done'}),h('span',{text:msg}))));
 }
+// Method Name: renderNext
+// Description: Displays the next upcoming tasks.
 function renderNext(){
   var card=$('#next-card');card.replaceChildren(h('h3',{text:'Next up'}));
   var t=todayStr(),now=Date.now();
@@ -563,7 +656,11 @@ function renderNext(){
   }
   if(lateN)card.append(h('p',{class:'muted',text:lateN+(lateN===1?' task is':' tasks are')+' past their time and still open.'}));
 }
+// Method Name: notifState
+// Description: Checks the current browser notification permission.
 function notifState(){return ('Notification' in window)?Notification.permission:'unsupported'}
+// Method Name: renderAlerts
+// Description: Displays reminder and notification settings.
 function renderAlerts(){
   var card=$('#alerts-card');card.replaceChildren(h('h3',{text:'Reminders'}));
   var ns=notifState();
@@ -576,6 +673,10 @@ function renderAlerts(){
       h('button',{class:'btn small',type:'button',onclick:function(){fireReminder(null,{title:'Test reminder',body:'This is how a reminder looks.'})}},'Send a test'))
   ));
 }
+
+// Method Name: streak
+
+// Description: Calculates the current task completion streak.
 
 function streak(){
   var t=todayStr(),n=0;
@@ -590,6 +691,8 @@ function streak(){
   }
   return n;
 }
+// Method Name: renderHistory
+// Description: Displays task history and completion statistics.
 function renderHistory(){
   seg($('#range'),[[7,'7 days'],[14,'14 days'],[30,'30 days']],S.range,function(v){S.range=v;renderHistory()});
   seg($('#hfilter'),[['all','All'],['done','Completed'],['open','Remaining']],S.hfilter,function(v){S.hfilter=v;renderHistory()});
@@ -633,11 +736,17 @@ function renderHistory(){
   if(!shown)box.append(h('div',{class:'empty'},h('b',{text:'No tasks to show'}),'Nothing matches this range and filter yet.'));
 }
 
+// Method Name: renderAll
+
+// Description: Refreshes the planner views.
+
 function renderAll(){
   $('#banner').hidden=!Array.from(S.tasks.values()).some(function(t){return t.sample});
   renderHero();renderWeek();renderCarry();renderList();renderRing();renderNext();renderAlerts();
   if(S.tab==='history')renderHistory();
 }
+// Method Name: applyTab
+// Description: Switches between planner and history views.
 function applyTab(){
   $('#view-plan').hidden=S.tab!=='plan';$('#view-history').hidden=S.tab!=='history';
   $('#tab-plan').setAttribute('aria-selected',String(S.tab==='plan'));$('#tab-history').setAttribute('aria-selected',String(S.tab==='history'));
@@ -653,6 +762,8 @@ $('#btn-clear-samples').addEventListener('click',clearSamples);
 $('#wk-prev').append(ico('left'));$('#wk-next').append(ico('right'));$('#logo').append(ico('book'));
 
 /* ---------- toasts, chime, reminders ---------- */
+// Method Name: toast
+// Description: Displays a short message on the page.
 function toast(o){
   var box=$('#toasts');
   var el=h('div',{class:'toast',role:'status'});
@@ -665,6 +776,8 @@ function toast(o){
   if(o.ttl)setTimeout(function(){el.remove()},o.ttl);
 }
 var AC=null;
+// Method Name: chime
+// Description: Plays a short reminder sound.
 function chime(){
   try{
     AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.resume)AC.resume();
@@ -675,9 +788,13 @@ function chime(){
     });
   }catch(e){}
 }
+// Method Name: systemNotify
+// Description: Displays a browser notification.
 function systemNotify(title,body,tag){
   try{if('Notification' in window&&Notification.permission==='granted')new Notification(title,{body:body,tag:tag||'daybook'})}catch(e){}
 }
+// Method Name: enableAlerts
+// Description: Requests permission to show browser notifications.
 function enableAlerts(){
   try{
     var p=Notification.requestPermission();
@@ -688,6 +805,8 @@ function enableAlerts(){
     }).catch(function(){renderAlerts()});
   }catch(e){toast({title:'Notifications are unavailable here',body:'In-page reminders keep working while Daybook is open.',ttl:4000});renderAlerts()}
 }
+// Method Name: fireReminder
+// Description: Shows a reminder for a task.
 function fireReminder(id,o){
   chime();
   var acts=[];
@@ -696,6 +815,8 @@ function fireReminder(id,o){
   toast({title:o.title,body:o.body,bell:true,actions:acts});
   systemNotify(o.title,o.body,id);
 }
+// Method Name: checkReminders
+// Description: Checks whether any task reminder should be shown.
 function checkReminders(){
   var now=Date.now(),changed=false;
   S.tasks.forEach(function(t,id){
@@ -719,7 +840,7 @@ setInterval(function(){
   else{renderNext();renderHero()}
 },15000);
 
-/* ---------- boot ---------- */
+// Start the planner and load saved tasks.
 loadNotified();
 S.tasks=new Map(seed());
 resetComposer();applyTab();
