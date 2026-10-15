@@ -1,68 +1,187 @@
-# Daybook Desktop (Windows)
+# 🗓️ Daybook Desktop
 
-Daybook is packaged as a standalone Windows desktop application using Electron. The original planner UI is retained, with the cloud-host-specific adapter removed so this edition stores data locally on this laptop. Google Fonts were removed so the app does not need the internet to render its UI.
+A **daily planner desktop application built using HTML, CSS, JavaScript, and Electron** to help users organize daily tasks, track progress, and review completed and remaining activities.
 
-## Requirements
+The project demonstrates practical implementation of **web technologies, task management, local storage, desktop application development, and Windows installer packaging**.
 
-- Windows 10/11, 64-bit
-- Node.js LTS (includes npm)
-- Internet connection for the first dependency install/build only
+---
 
-## One-click Windows build
+## 🚀 Features
 
-1. Install Node.js LTS if it is not already installed: https://nodejs.org/en/download
-2. Extract this folder to a normal writable folder.
-3. Double-click **`Build-Daybook.bat`**.
-4. Wait for dependency installation and packaging to finish. The `release` folder opens automatically when the build succeeds.
-5. Run the generated Daybook Setup `.exe` to install the app.
+* 📝 Add tasks for a selected date
+* ⏰ Set task time and reminder preferences
+* 🎯 Set task priority and category
+* 📌 Add optional notes to tasks
+* ✅ Mark tasks as completed
+* ✏️ Edit and delete tasks
+* 📊 View daily completion progress
+* 📅 Navigate between dates
+* 📈 View task history and completion statistics
+* 🔎 Filter tasks by all, completed, or remaining
+* 🔔 In-page reminders and desktop notifications
+* 🖥️ Run as a Windows desktop application
 
-The first build needs an internet connection to download dependencies. This script automates the dependency install and installer build; it cannot automatically verify every behavior on your laptop.
+---
 
-## Run from source
+## 🛠️ Technologies Used
 
-1. Install Node.js LTS from https://nodejs.org/.
-2. Extract this folder to a normal writable folder, e.g. `C:\Users\YourName\Documents\Daybook`.
-3. Open PowerShell in this folder.
-4. Run:
+* **HTML5** — application structure
+* **CSS3** — styling and layout
+* **JavaScript** — task management and application interactions
+* **Electron** — desktop application runtime
+* **electron-builder** — Windows installer packaging
+* **Local Storage** — local task data persistence
 
-   ```powershell
-   npm install
-   npm start
-   ```
+---
 
-## Build a Windows installer
+## 📸 Application Screenshots
 
-From PowerShell in this folder:
+### Planner Dashboard
 
-```powershell
+View daily tasks, add new activities, and track daily progress.
+
+![Daybook Planner Dashboard](screenshots/planner.png)
+
+### History Dashboard
+
+Review completion statistics and daily task history.
+
+![Daybook History Dashboard](screenshots/history.png)
+
+### Remaining Tasks
+
+Focus on pending tasks, scheduled times, priorities, and categories.
+
+![Daybook Remaining Tasks](screenshots/remaining-tasks.png)
+
+> **Note:** Save the three screenshots in a folder named `screenshots` using the filenames `planner.png`, `history.png`, and `remaining-tasks.png`.
+
+---
+
+## 📁 Project Structure
+
+```text
+Daybook-Desktop/
+│
+├── screenshots/
+│   ├── planner.png
+│   ├── history.png
+│   └── remaining-tasks.png
+│
+├── index.html
+├── main.js
+├── package.json
+├── package-lock.json
+├── README.md
+├── Build-Daybook.bat
+├── Run-Daybook.bat
+├── PROJECT_STATUS.md
+└── .gitignore
+```
+
+---
+
+## ▶️ How to Run
+
+### 1. Install Node.js
+
+Download and install the [Node.js LTS version](https://nodejs.org/en/download).
+
+### 2. Clone the Repository
+
+```bash
+git clone <repository-url>
+```
+
+### 3. Navigate to the Project Directory
+
+```bash
+cd Daybook-Desktop
+```
+
+### 4. Install Dependencies
+
+```bash
+npm install
+```
+
+### 5. Run the Application
+
+```bash
+npm start
+```
+
+---
+
+## 🏗️ Build the Windows Installer
+
+Run the following commands from the project directory:
+
+```bash
 npm install
 npm run dist:win
 ```
 
-The installer will be created in `release`. Run the generated setup `.exe` and follow the installer. A desktop shortcut will be created.
+The generated installer will be placed in the `release` folder.
 
-## Data and privacy
+On Windows, you can also double-click `Build-Daybook.bat` to build the installer.
 
-- The app does not require a login or a cloud service.
-- Tasks use the Chromium local-storage profile managed by Electron, which persists between app launches on this Windows user account.
-- Keep the app installed and do not clear its application data if you want to preserve tasks.
-- Before using it for important planning, test creating, editing, completing, deleting, and reopening tasks.
+---
 
-See `PROJECT_STATUS.md` for delivery status and the required laptop smoke tests.
+## 💾 Data and Reminders
 
-## Important limitations
+* Tasks are stored locally in the application's storage profile.
+* Data is not automatically synchronized across computers.
+* In-page reminders and desktop notifications depend on the application and Windows notification settings.
+* Reminders are not guaranteed when Daybook is fully closed.
 
-- This source project has not been built or tested on your specific laptop yet. A clean build and real-machine smoke test are still required before calling it error-free.
-- Reminders are checked while the application is running. Windows notification permission and notification behavior must be tested on the target laptop; reminders are not guaranteed if the app is fully closed.
-- The first run uses the existing sample tasks in the original app when no saved tasks exist. You can delete those and add your own.
-- This is a local single-user edition. It does not synchronize tasks across devices.
+---
 
-## Smoke-test checklist
+## 🧠 Concepts Demonstrated
 
-- [ ] App opens without a blank screen or DevTools error.
-- [ ] Add, edit, complete, and delete a task.
-- [ ] Close and reopen the app; verify tasks remain.
-- [ ] Navigate between dates and verify tasks appear on the correct date.
-- [ ] Test a reminder with the app open and confirm Windows notification settings.
-- [ ] Restart Windows and confirm the app and saved data still work.
-- [ ] Test light/dark theme and resize the window.
+* HTML page structure
+* CSS styling and layout
+* JavaScript event handling and application logic
+* Task creation and management
+* Local data persistence
+* Electron desktop application development
+* Windows installer packaging
+* Project documentation with Markdown
+
+---
+
+## 🔮 Future Enhancements
+
+* [ ] Add database-backed storage
+* [ ] Add task export and import
+* [ ] Improve reminder reliability when the app is closed
+* [ ] Add backup and restore functionality
+* [ ] Add automated tests
+* [ ] Add cloud synchronization
+* [ ] Publish versioned installers through GitHub Releases
+
+---
+
+## 🎯 Learning Objective
+
+This project was developed to practice building a desktop application from web technologies and package it for Windows.
+
+> **HTML + CSS + JavaScript + Electron = Daybook Desktop**
+
+---
+
+## 📜 License
+
+Add a license file if you intend to distribute the project under an open-source license.
+
+---
+
+## 👨‍💻 Author
+
+**Shubham Gadhe**
+
+GitHub: [@shubham-gadhe](https://github.com/shubham-gadhe)
+
+---
+
+⭐ If you found this project useful, consider giving the repository a star!
